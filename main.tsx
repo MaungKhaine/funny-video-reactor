@@ -1,10 +1,5 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-// Vercel Environment Variable ကနေ API Key ကို ခေါ်ယူခြင်း
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
-const genAI = new GoogleGenerativeAI(apiKey);
 
 function App() {
   const [input, setInput] = useState("");
@@ -14,30 +9,37 @@ function App() {
   const handleReact = async () => {
     if (!input) return alert("ဗီဒီယို Link သို့မဟုတ် အကြောင်းအရာ ထည့်ပါ");
     
-    if (!apiKey || apiKey === "") {
-      setResponse("Error: API Key is missing. Please check Vercel Environment Variables.");
-      return;
-    }
-
     setLoading(true);
-    try {
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-      const prompt = `You are a funny video reactor. React to this: ${input}`;
+    setResponse("");
 
-      const result = await model.generateContent(prompt);
-      const text = result.response.text();
-      setResponse(text);
+    try {
+      // Gemini ကို တိုက်ရိုက်မခေါ်ဘဲ ကျွန်တော်တို့ ဆောက်ထားတဲ့ API ဆီ လှမ်းခေါ်ခြင်း
+      const res = await fetch("/api/react", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          prompt: `You are a funny video reactor. React to this video description: ${input}` 
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.text) {
+        setResponse(data.text);
+      } else {
+        setResponse("Error: API မှ အဖြေပြန်မလာပါ။ " + (data.error || ""));
+      }
     } catch (error) {
       console.error(error);
-      setResponse("Error: Gemini API နဲ့ ချိတ်ဆက်လို့မရပါ။ Key သို့မဟုတ် Region ကို စစ်ဆေးပါ။");
+      setResponse("Error: Server နဲ့ ချိတ်ဆက်လို့မရပါ။");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
-      <h1> Funny Video Reactor</h1>
+    <div style={{ padding: '20px', textAlign: 'center', fontFamily: 'sans-serif' }}>
+      <h1>🎬 Funny Video Reactor</h1>
       <p>ဗီဒီယိုအကြောင်း ပြောပြပါ၊ Gemini က react လုပ်ပေးပါလိမ့်မယ်။</p>
       
       <input 
@@ -45,23 +47,40 @@ function App() {
         value={input} 
         onChange={(e) => setInput(e.target.value)} 
         placeholder="ဥပမာ- ကြောင် fighting ဖြစ်နေတာ"
-        style={{ padding: '10px', width: '300px' }}
+        style={{ padding: '10px', width: '80%', maxWidth: '400px', marginBottom: '10px' }}
       />
-      <br /><br />
+      <br />
       
-      <button onClick={handleReact} disabled={loading} style={{ padding: '10px 20px', cursor: 'pointer' }}>
+      <button 
+        onClick={handleReact} 
+        disabled={loading}
+        style={{ 
+          padding: '10px 20px', 
+          backgroundColor: '#4285f4', 
+          color: 'white', 
+          border: 'none', 
+          borderRadius: '5px',
+          cursor: loading ? 'not-allowed' : 'pointer'
+        }}
+      >
         {loading ? "Thinking..." : "React Now!"}
       </button>
 
-      <div style={{ marginTop: '20px', padding: '15px', background: '#f4f4f4', borderRadius: '8px' }}>
-        <h3>Gemini's Reaction:</h3>
-        <p>{response}</p>
+      <div style={{ 
+        marginTop: '20px', 
+        padding: '20px', 
+        backgroundColor: '#f0f0f0', 
+        borderRadius: '10px',
+        textAlign: 'left',
+        minHeight: '100px'
+      }}>
+        <strong>Gemini's Reaction:</strong>
+        <p style={{ whiteSpace: 'pre-wrap' }}>{response}</p>
       </div>
     </div>
   );
 }
 
-// သင့် App ကို Render လုပ်တဲ့အပိုင်း (အရင်အတိုင်းထားပါ)
 const rootElement = document.getElementById('root');
 if (rootElement) {
   ReactDOM.createRoot(rootElement).render(
