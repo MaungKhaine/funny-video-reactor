@@ -13,17 +13,14 @@ const App = () => {
   const handleReact = async () => {
     if (!input) return;
     setLoading(true);
-    try {
-      try {
-      // ဒီနေရာလေးမှာ အစားထိုးပါ
+        try {
+      // ဒီနေရာမှာ apiVersion: "v1" ထည့်ဖို့ အရေးကြီးပါတယ်
       const model = genAI.getGenerativeModel(
         { model: "gemini-1.5-flash" },
         { apiVersion: "v1" }
       );
       
       const prompt = `ဒီဗီဒီယိုအကြောင်းကို ဟာသနှောပြီး React လုပ်ပေးပါ: ${input}`;
-      const prompt = `ဒီဗီဒီယိုအကြောင်းကို ဟာသနှောပြီး React လုပ်ပေးပါ: ${input}`;
-      
       const result = await model.generateContent(prompt);
       const text = result.response.text();
       setResponse(text);
