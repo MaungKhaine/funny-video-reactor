@@ -1,91 +1,65 @@
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom/client';
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-function App() {
+const App = () => {
   const [input, setInput] = useState("");
   const [response, setResponse] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Vercel Environment Variable ကနေ Key ကို ယူမယ်
+  const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
+
   const handleReact = async () => {
-    if (!input) return alert("ဗီဒီယို Link သို့မဟုတ် အကြောင်းအရာ ထည့်ပါ");
-    
+    if (!input) return;
     setLoading(true);
-    setResponse("");
-
     try {
-      // Gemini ကို တိုက်ရိုက်မခေါ်ဘဲ ကျွန်တော်တို့ ဆောက်ထားတဲ့ API ဆီ လှမ်းခေါ်ခြင်း
-      const res = await fetch("/api/react", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          prompt: `You are a funny video reactor. React to this video description: ${input}` 
-        }),
-      });
-
-      const data = await res.json();
-
-      if (data.text) {
-        setResponse(data.text);
-      } else {
-        setResponse("Error: API မှ အဖြေပြန်မလာပါ။ " + (data.error || ""));
-      }
+      // Model Name ကို gemini-1.5-flash လို့ပဲ သုံးပါ
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const prompt = `ဒီဗီဒီယိုအကြောင်းကို ဟာသနှောပြီး React လုပ်ပေးပါ: ${input}`;
+      
+      const result = await model.generateContent(prompt);
+      const text = result.response.text();
+      setResponse(text);
     } catch (error) {
+      setResponse("Error: API ချိတ်ဆက်မှု အဆင်မပြေပါ။ Key သို့မဟုတ် Model Name စစ်ဆေးပါ။");
       console.error(error);
-      setResponse("Error: Server နဲ့ ချိတ်ဆက်လို့မရပါ။");
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   return (
-    <div style={{ padding: '20px', textAlign: 'center', fontFamily: 'sans-serif' }}>
-      <h1>🎬 Funny Video Reactor</h1>
-      <p>ဗီဒီယိုအကြောင်း ပြောပြပါ၊ Gemini က react လုပ်ပေးပါလိမ့်မယ်။</p>
+    <div style={{ background: 'white', padding: '20px', borderRadius: '10px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+      <h1 style={{ textAlign: 'center' }}> Funny Video Reactor</h1>
+      <p style={{ fontSize: '14px', color: '#666' }}>ဗီဒီယိုအကြောင်း ပြောပြပါ။ Gemini က react လုပ်ပေးပါလိမ့်မယ်။</p>
       
       <input 
-        type="text" 
-        value={input} 
-        onChange={(e) => setInput(e.target.value)} 
-        placeholder="ဥပမာ- ကြောင် fighting ဖြစ်နေတာ"
-        style={{ padding: '10px', width: '80%', maxWidth: '400px', marginBottom: '10px' }}
+        style={{ width: '90%', padding: '10px', marginBottom: '10px', borderRadius: '5px', border: '1px solid #ddd' }}
+        placeholder="ခွေးကိုက်တဲ့ video..." 
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
       />
-      <br />
       
       <button 
-        onClick={handleReact} 
+        onClick={handleReact}
         disabled={loading}
-        style={{ 
-          padding: '10px 20px', 
-          backgroundColor: '#4285f4', 
-          color: 'white', 
-          border: 'none', 
-          borderRadius: '5px',
-          cursor: loading ? 'not-allowed' : 'pointer'
-        }}
+        style={{ width: '100%', padding: '10px', backgroundColor: '#4285f4', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
       >
-        {loading ? "Thinking..." : "React Now!"}
+        {loading ? "Reacting..." : "React Now!"}
       </button>
 
-      <div style={{ 
-        marginTop: '20px', 
-        padding: '20px', 
-        backgroundColor: '#f0f0f0', 
-        borderRadius: '10px',
-        textAlign: 'left',
-        minHeight: '100px'
-      }}>
-        <strong>Gemini's Reaction:</strong>
-        <p style={{ whiteSpace: 'pre-wrap' }}>{response}</p>
-      </div>
+      {response && (
+        <div style={{ marginTop: '20px', padding: '15px', backgroundColor: '#eee', borderRadius: '5px' }}>
+          <strong>Gemini's Reaction:</strong>
+          <p>{response}</p>
+        </div>
+      )}
     </div>
   );
-}
+};
 
-const rootElement = document.getElementById('root');
-if (rootElement) {
-  ReactDOM.createRoot(rootElement).render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
-  );
-}
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
