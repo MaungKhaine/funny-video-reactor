@@ -14,11 +14,14 @@ const App = () => {
     if (!input) return;
     setLoading(true);
     try {
-      // Model Name ကို gemini-1.5-flash လို့ပဲ သုံးပါ
-     const model = genAI.getGenerativeModel(
-  { model: "gemini-1.5-flash" },
-  { apiVersion: "v1" }
-); 
+      try {
+      // ဒီနေရာလေးမှာ အစားထိုးပါ
+      const model = genAI.getGenerativeModel(
+        { model: "gemini-1.5-flash" },
+        { apiVersion: "v1" }
+      );
+      
+      const prompt = `ဒီဗီဒီယိုအကြောင်းကို ဟာသနှောပြီး React လုပ်ပေးပါ: ${input}`;
       const prompt = `ဒီဗီဒီယိုအကြောင်းကို ဟာသနှောပြီး React လုပ်ပေးပါ: ${input}`;
       
       const result = await model.generateContent(prompt);
